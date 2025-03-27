@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, User, ChevronDown, LogOut } from 'lucide-react';
 import TelegramLogin from '../auth/TelegramLogin';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -13,17 +14,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState<{ firstName?: string; photoUrl?: string } | null>(null);
-
-  const handleTelegramLogin = (user: any) => {
-    console.log('Telegram login success:', user);
-    setIsLoggedIn(true);
-    setUserData({
-      firstName: user.first_name,
-      photoUrl: user.photo_url,
-    });
-  };
+  const { user, logout, isLoading } = useAuth();
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -40,9 +31,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserData(null);
+  const handleLogout = async () => {
+    await logout();
     setUserMenuOpen(false);
   };
 
@@ -61,24 +51,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {isLoggedIn ? (
+          {user ? (
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 rounded-lg py-2 px-3 hover:bg-pos-gray button-transition"
               >
-                {userData?.photoUrl ? (
-                  <img
-                    src={userData.photoUrl}
-                    alt="User"
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pos-blue text-white">
-                    <User size={16} />
-                  </div>
-                )}
-                <span className="text-sm font-medium">{userData?.firstName || 'User'}</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pos-blue text-white">
+                  <User size={16} />
+                </div>
+                <span className="text-sm font-medium">
+                  {user.user_metadata?.first_name || 'User'}
+                </span>
                 <ChevronDown size={16} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -95,7 +79,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
               )}
             </div>
           ) : (
-            <TelegramLogin onLogin={handleTelegramLogin} />
+            <div className={isLoading ? "opacity-50" : ""}>
+              <TelegramLogin 
+                buttonSize="medium"
+                showUserPic={true}
+                cornerRadius={8}
+              />
+            </div>
           )}
         </div>
       </div>
