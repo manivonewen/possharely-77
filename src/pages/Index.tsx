@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
@@ -7,7 +6,6 @@ import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import TelegramLogin from '@/components/auth/TelegramLogin';
-import { Button } from '@/components/ui/button';
 
 const sampleProducts: Product[] = [
   {
@@ -95,14 +93,11 @@ const Index = () => {
   };
 
   const handleProductSelect = (product: Product) => {
-    // Check if the product is already in the cart
     const existingItem = cartItems.find((item) => item.product.id === product.id);
 
     if (existingItem) {
-      // If the product is already in the cart, increment the quantity
       handleCartItemUpdate(product.id, existingItem.quantity + 1);
     } else {
-      // Otherwise, add it to the cart with quantity 1
       setCartItems([...cartItems, { product, quantity: 1 }]);
     }
   };
@@ -127,7 +122,6 @@ const Index = () => {
     setCartItems([]);
   };
 
-  // Close sidebar on small screens when clicking outside
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -137,7 +131,6 @@ const Index = () => {
       }
     };
 
-    // Set initial sidebar state based on screen size
     handleResize();
 
     window.addEventListener('resize', handleResize);
@@ -152,7 +145,6 @@ const Index = () => {
         <Sidebar isOpen={isSidebarOpen} />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Overlay for mobile when sidebar is open */}
           {isSidebarOpen && (
             <div
               className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
@@ -168,7 +160,7 @@ const Index = () => {
             {!user && !isLoading && (
               <div className="flex justify-center items-center p-4 bg-white shadow rounded-lg m-4">
                 <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-4">Login to Access POS</h2>
+                  <h2 className="text-xl font-semibold mb-4">Login to Access PICOpos</h2>
                   <p className="text-gray-600 mb-4">Please log in with your Telegram account to continue</p>
                   <div className="flex justify-center">
                     <TelegramLogin 

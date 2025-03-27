@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { Order } from '@/lib/types';
 import { Search, Calendar, Filter, ChevronDown, FileText } from 'lucide-react';
+import { format } from 'date-fns';
 
-const Sales = () => {
+const Orders = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -155,6 +155,12 @@ const Sales = () => {
     }
   };
 
+  const formatDateTime = (date: Date) => {
+    const formattedDate = format(date, 'dd/MM/yy');
+    const formattedTime = format(date, 'HH:mm');
+    return `${formattedDate} ${formattedTime}`;
+  };
+
   return (
     <div className="flex h-screen flex-col bg-pos-gray">
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
@@ -177,8 +183,8 @@ const Sales = () => {
         >
           <div className="p-6">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-pos-dark">Sales History</h1>
-              <p className="text-gray-500">View and manage your sales transactions</p>
+              <h1 className="text-2xl font-bold text-pos-dark">Orders</h1>
+              <p className="text-gray-500">View and manage your order transactions</p>
             </div>
             
             <div className="mb-4 flex flex-col gap-4 sm:flex-row">
@@ -259,7 +265,7 @@ const Sales = () => {
                           {order.id}
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                          {order.createdAt.toLocaleString()}
+                          {formatDateTime(order.createdAt)}
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm">
                           {order.customerInfo?.name || 'Walk-in Customer'}
@@ -289,7 +295,7 @@ const Sales = () => {
               
               {filteredSales.length === 0 && (
                 <div className="py-8 text-center text-gray-500">
-                  <p>No sales found</p>
+                  <p>No orders found</p>
                 </div>
               )}
             </div>
@@ -300,4 +306,4 @@ const Sales = () => {
   );
 };
 
-export default Sales;
+export default Orders;

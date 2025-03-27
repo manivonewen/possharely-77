@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, BarChart2, Package, ClipboardList } from 'lucide-react';
+import { ShoppingCart, BarChart2, Package, ClipboardList, Users, ListCheck } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const navItems = [
     {
-      name: 'Point of Sale',
+      name: 'PICOpos',
       path: '/',
       icon: <ShoppingCart size={20} />,
     },
@@ -20,14 +20,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       icon: <BarChart2 size={20} />,
     },
     {
-      name: 'Inventory',
-      path: '/inventory',
+      name: 'Products',
+      path: '/products',
       icon: <Package size={20} />,
     },
     {
-      name: 'Sales History',
+      name: 'Inventory',
+      path: '/inventory',
+      icon: <ListCheck size={20} />,
+    },
+    {
+      name: 'Orders',
       path: '/sales',
       icon: <ClipboardList size={20} />,
+    },
+    {
+      name: 'Contacts',
+      path: '/contacts',
+      icon: <Users size={20} />,
     },
   ];
 
