@@ -1,9 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
 import Cart from '@/components/pos/Cart';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import TelegramLogin from '@/components/auth/TelegramLogin';
+import { Button } from '@/components/ui/button';
 
 const sampleProducts: Product[] = [
   {
@@ -84,6 +88,7 @@ const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [products] = useState<Product[]>(sampleProducts);
+  const { user, isLoading } = useAuth();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -160,20 +165,38 @@ const Index = () => {
               isSidebarOpen ? 'lg:ml-64' : ''
             }`}
           >
-            <div className="grid h-full grid-cols-1 gap-4 p-4 md:grid-cols-3">
-              <div className="md:col-span-2 card-container">
-                <ProductGrid products={products} onProductSelect={handleProductSelect} />
+            {!user && !isLoading && (
+              <div className="flex justify-center items-center p-4 bg-white shadow rounded-lg m-4">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold mb-4">Login to Access POS</h2>
+                  <p className="text-gray-600 mb-4">Please log in with your Telegram account to continue</p>
+                  <div className="flex justify-center">
+                    <TelegramLogin 
+                      buttonSize="large"
+                      showUserPic={true}
+                      cornerRadius={8}
+                    />
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="card-container">
-                <Cart
-                  items={cartItems}
-                  onItemUpdate={handleCartItemUpdate}
-                  onItemRemove={handleCartItemRemove}
-                  onClearCart={handleClearCart}
-                />
+            {(user || isLoading) && (
+              <div className="grid h-full grid-cols-1 gap-4 p-4 md:grid-cols-3">
+                <div className="md:col-span-2 card-container">
+                  <ProductGrid products={products} onProductSelect={handleProductSelect} />
+                </div>
+
+                <div className="card-container">
+                  <Cart
+                    items={cartItems}
+                    onItemUpdate={handleCartItemUpdate}
+                    onItemRemove={handleCartItemRemove}
+                    onClearCart={handleClearCart}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </main>
         </div>
       </div>
