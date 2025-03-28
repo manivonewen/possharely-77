@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, User, ChevronDown, LogOut } from 'lucide-react';
-import TelegramLogin from '../auth/TelegramLogin';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
@@ -19,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/':
-        return 'Point of Sale';
+        return 'POS';
       case '/dashboard':
         return 'Dashboard';
       case '/inventory':
@@ -78,15 +77,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
                 </div>
               )}
             </div>
-          ) : (
-            <div className={isLoading ? "opacity-50" : ""}>
-              <TelegramLogin 
-                buttonSize="medium"
-                showUserPic={true}
-                cornerRadius={8}
-              />
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

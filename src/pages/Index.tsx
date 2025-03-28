@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
@@ -5,7 +6,9 @@ import Cart from '@/components/pos/Cart';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import TelegramLogin from '@/components/auth/TelegramLogin';
+import { ShoppingCart, List, Grid } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 
 const sampleProducts: Product[] = [
   {
@@ -86,7 +89,9 @@ const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [products] = useState<Product[]>(sampleProducts);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const { user, isLoading } = useAuth();
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -157,41 +162,56 @@ const Index = () => {
               isSidebarOpen ? 'lg:ml-64' : ''
             }`}
           >
-            {!user && !isLoading && (
-              <div className="flex justify-center items-center p-4 bg-white shadow rounded-lg m-4">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-4">Login to Access PICOpos</h2>
-                  <p className="text-gray-600 mb-4">Please log in with your Telegram account to continue</p>
-                  <div className="flex justify-center">
-                    <TelegramLogin 
-                      buttonSize="large"
-                      showUserPic={true}
-                      cornerRadius={8}
-                    />
-                  </div>
+            <div className="grid h-full grid-cols-1 gap-4 p-4">
+              <div className="card-container">
+                <div className="mb-4 flex justify-between items-center">
+                  <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grid')}>
+                    <ToggleGroupItem value="table" aria-label="Table view">
+                      <List className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="grid" aria-label="Grid view">
+                      <Grid className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
+                <ProductGrid 
+                  products={products} 
+                  onProductSelect={handleProductSelect} 
+                  viewMode={viewMode}
+                  showSku={false}
+                />
               </div>
-            )}
-
-            {(user || isLoading) && (
-              <div className="grid h-full grid-cols-1 gap-4 p-4 md:grid-cols-3">
-                <div className="md:col-span-2 card-container">
-                  <ProductGrid products={products} onProductSelect={handleProductSelect} />
-                </div>
-
-                <div className="card-container">
-                  <Cart
-                    items={cartItems}
-                    onItemUpdate={handleCartItemUpdate}
-                    onItemRemove={handleCartItemRemove}
-                    onClearCart={handleClearCart}
-                  />
-                </div>
-              </div>
-            )}
+            </div>
           </main>
         </div>
       </div>
+
+      {/* Floating Cart Button */}
+      <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
+        <DrawerTrigger asChild>
+          <button 
+            className="fixed bottom-6 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-pos-blue text-white shadow-lg hover:bg-pos-blue/90 transition-colors"
+            aria-label="Open Cart"
+          >
+            <ShoppingCart className="h-6 w-6" />
+            {cartItems.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-pos-danger text-xs font-bold text-white">
+                {cartItems.reduce((total, item) => total + item.quantity, 0)}
+              </span>
+            )}
+          </button>
+        </DrawerTrigger>
+        <DrawerContent className="h-[90vh]">
+          <div className="h-full">
+            <Cart
+              items={cartItems}
+              onItemUpdate={handleCartItemUpdate}
+              onItemRemove={handleCartItemRemove}
+              onClearCart={handleClearCart}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

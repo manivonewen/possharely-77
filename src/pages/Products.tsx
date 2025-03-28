@@ -1,19 +1,28 @@
 
-import React, { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
+import React, { useState, useRef } from 'react';
+import { Layout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, Search, Edit, Trash, Plus } from 'lucide-react';
+import { Package, Search, Edit, Trash, Plus, Upload, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Product } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [columnMappings, setColumnMappings] = useState({
+    name: '',
+    category: '',
+    price: '',
+    stock: ''
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [products, setProducts] = useState<Product[]>([
     {
@@ -99,6 +108,25 @@ export default function Products() {
     setIsAddProductOpen(false);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For demo purposes, just show a toast
+      setIsImportModalOpen(true);
+      // In a real implementation, we would parse the file here
+      // and then show the column mapping dialog
+    }
+  };
+
+  const handleImportConfirm = () => {
+    // This would process the file with the column mappings
+    toast.success('Products imported successfully');
+    setIsImportModalOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,10 +167,24 @@ export default function Products() {
               </SelectContent>
             </Select>
             
-            <Button className="gap-1" onClick={() => setIsAddProductOpen(true)}>
-              <Plus className="h-4 w-4" />
-              <span>Add Product</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button className="gap-1" onClick={() => setIsAddProductOpen(true)}>
+                <Plus className="h-4 w-4" />
+                <span>Add Product</span>
+              </Button>
+              
+              <Button variant="outline" className="gap-1 relative" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4" />
+                <span className="sr-only">Import Products</span>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden" 
+                  accept=".csv,.xlsx,.xls" 
+                  onChange={handleFileUpload}
+                />
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -298,6 +340,99 @@ export default function Products() {
                 disabled={!newProduct.name || !newProduct.category || newProduct.price <= 0}
               >
                 Add Product
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Import CSV/Excel Dialog */}
+        <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Map Columns from File</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nameColumn">Product Name Column</Label>
+                <Select 
+                  onValueChange={(value) => setColumnMappings({...columnMappings, name: value})}
+                  value={columnMappings.name}
+                >
+                  <SelectTrigger id="nameColumn">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Column A</SelectItem>
+                    <SelectItem value="B">Column B</SelectItem>
+                    <SelectItem value="C">Column C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="categoryColumn">Category Column</Label>
+                <Select 
+                  onValueChange={(value) => setColumnMappings({...columnMappings, category: value})}
+                  value={columnMappings.category}
+                >
+                  <SelectTrigger id="categoryColumn">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Column A</SelectItem>
+                    <SelectItem value="B">Column B</SelectItem>
+                    <SelectItem value="C">Column C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="priceColumn">Price Column</Label>
+                <Select 
+                  onValueChange={(value) => setColumnMappings({...columnMappings, price: value})}
+                  value={columnMappings.price}
+                >
+                  <SelectTrigger id="priceColumn">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Column A</SelectItem>
+                    <SelectItem value="B">Column B</SelectItem>
+                    <SelectItem value="C">Column C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="stockColumn">Stock Column (Optional)</Label>
+                <Select 
+                  onValueChange={(value) => setColumnMappings({...columnMappings, stock: value})}
+                  value={columnMappings.stock}
+                >
+                  <SelectTrigger id="stockColumn">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Not included</SelectItem>
+                    <SelectItem value="A">Column A</SelectItem>
+                    <SelectItem value="B">Column B</SelectItem>
+                    <SelectItem value="C">Column C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-md">
+                <AlertCircle className="h-5 w-5" />
+                <span className="text-sm">Please select the columns that match your file structure.</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsImportModalOpen(false)}>Cancel</Button>
+              <Button 
+                onClick={handleImportConfirm}
+                disabled={!columnMappings.name || !columnMappings.category || !columnMappings.price}
+              >
+                Import Products
               </Button>
             </DialogFooter>
           </DialogContent>
