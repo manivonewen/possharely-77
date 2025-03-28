@@ -27,7 +27,7 @@ export interface Order {
   discount: number;
   total: number;
   paymentMethod: 'cash' | 'card' | 'other';
-  status: 'completed' | 'refunded' | 'voided';
+  status: 'completed' | 'refunded' | 'voided' | 'archived';
   createdAt: Date;
   customerInfo?: CustomerInfo;
 }
@@ -36,6 +36,7 @@ export interface CustomerInfo {
   name?: string;
   email?: string;
   phone?: string;
+  id?: string;
 }
 
 export interface Category {
@@ -83,11 +84,12 @@ export interface InventoryItem extends Product {
 export interface Contact {
   id: string;
   name: string;
-  category: 'team' | 'client' | 'supplier' | 'driver';
+  category?: 'team' | 'client' | 'supplier' | 'driver';
   telegramId?: string;
   email?: string;
   phone?: string;
   orders?: Order[];
+  isDriver?: boolean;
 }
 
 export interface SavedCart {
@@ -97,7 +99,7 @@ export interface SavedCart {
   tax: number;
   discount: number;
   total: number;
-  status: 'pending' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled' | 'new order' | 'processing' | 'completed';
   createdAt: Date;
   customerInfo?: CustomerInfo;
 }
@@ -134,6 +136,7 @@ export interface StoreSettings {
     showTransactions: boolean;
     showSales: boolean;
     showSettings: boolean;
+    primaryColor: 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'teal';
   };
   integrations: {
     telegram: boolean;

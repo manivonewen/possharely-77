@@ -4,126 +4,134 @@ import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, UserPlus, Edit, Trash, FileText, MessageSquare, ExternalLink } from 'lucide-react';
+import { Search, UserPlus, Edit, Trash2, Mail, Phone, Tag, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Contact } from '@/lib/types';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export default function Contacts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [newTag, setNewTag] = useState('');
+  
+  const [newContact, setNewContact] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    category: string;
+    isDriver: boolean;
+  }>({
+    name: '',
+    email: '',
+    phone: '',
+    category: 'client',
+    isDriver: false
+  });
   
   const [contacts, setContacts] = useState<Contact[]>([
     {
-      id: '1',
+      id: 'contact1',
       name: 'John Doe',
+      email: 'john@example.com',
+      phone: '123-456-7890',
       category: 'client',
-      telegramId: '123456789',
-      phone: '+1234567890',
-      orders: [
-        {
-          id: 'ord1',
-          items: [],
-          subtotal: 25.99,
-          tax: 2.60,
-          discount: 0,
-          total: 28.59,
-          paymentMethod: 'cash',
-          status: 'completed',
-          createdAt: new Date('2023-10-15T14:30:00')
-        },
-        {
-          id: 'ord2',
-          items: [],
-          subtotal: 34.50,
-          tax: 3.45,
-          discount: 5,
-          total: 32.95,
-          paymentMethod: 'card',
-          status: 'completed',
-          createdAt: new Date('2023-11-02T10:15:00')
-        }
-      ]
+      isDriver: false
     },
     {
-      id: '2',
+      id: 'contact2',
       name: 'Jane Smith',
-      category: 'supplier',
       email: 'jane@example.com',
-      phone: '+9876543210',
-      orders: []
+      phone: '234-567-8901',
+      category: 'supplier',
+      isDriver: false
     },
     {
-      id: '3',
+      id: 'contact3',
       name: 'Mike Johnson',
-      category: 'team',
-      telegramId: '987654321',
-      orders: []
+      email: 'mike@example.com',
+      phone: '345-678-9012',
+      category: 'driver',
+      isDriver: true
     },
     {
-      id: '4',
-      name: 'Sarah Driver',
-      category: 'driver',
-      phone: '+1122334455',
-      telegramId: '456789123',
-      orders: []
+      id: 'contact4',
+      name: 'Sarah Wilson',
+      email: 'sarah@example.com',
+      phone: '456-789-0123',
+      category: 'team',
+      isDriver: false
     }
   ]);
 
-  const [newContact, setNewContact] = useState<{
-    name: string;
-    category: 'team' | 'client' | 'supplier' | 'driver';
-    telegramId?: string;
-    email?: string;
-    phone?: string;
-  }>({
-    name: '',
-    category: 'client',
-  });
+  const categories = ['client', 'supplier', 'driver', 'team'];
 
   const handleAddContact = () => {
     const contact: Contact = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: `contact${Date.now()}`,
       name: newContact.name,
-      category: newContact.category,
-      telegramId: newContact.telegramId,
       email: newContact.email,
       phone: newContact.phone,
-      orders: []
+      category: newContact.category as Contact['category'],
+      isDriver: newContact.isDriver
     };
     
     setContacts(prev => [...prev, contact]);
     setNewContact({
       name: '',
+      email: '',
+      phone: '',
       category: 'client',
+      isDriver: false
     });
     setIsAddContactOpen(false);
+    toast.success('Contact added successfully');
   };
 
-  const openContactProfile = (contact: Contact) => {
-    setSelectedContact(contact);
-    setIsProfileOpen(true);
+  const handleAddTag = () => {
+    if (!newTag.trim() || !selectedContactId) return;
+    
+    // In a real app, this would add a tag to the contact
+    // For now, we'll just show a toast
+    toast.success(`Tag "${newTag}" added to contact`);
+    setNewTag('');
+    setIsTagModalOpen(false);
+  };
+
+  const handleTagContact = (contactId: string) => {
+    setSelectedContactId(contactId);
+    setIsTagModalOpen(true);
   };
 
   const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            contact.telegramId?.includes(searchTerm) ||
-                            contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            contact.phone?.includes(searchTerm);
+    const matchesSearch = 
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.phone.includes(searchTerm);
     
     const matchesCategory = !selectedCategory || contact.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
 
-  const openTelegramChat = (telegramId?: string) => {
-    if (telegramId) {
-      window.open(`https://t.me/${telegramId}`, '_blank');
+  const getCategoryBadgeClass = (category: string) => {
+    switch(category) {
+      case 'client':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'supplier':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      case 'driver':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      case 'team':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -151,10 +159,9 @@ export default function Contacts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Categories</SelectItem>
-                <SelectItem value="team">Team</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="supplier">Supplier</SelectItem>
-                <SelectItem value="driver">Driver</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             
@@ -170,9 +177,10 @@ export default function Contacts() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>ID</TableHead>
+                <TableHead>Driver</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -181,43 +189,34 @@ export default function Contacts() {
                 filteredContacts.map((contact) => (
                   <TableRow key={contact.id}>
                     <TableCell className="font-medium">{contact.name}</TableCell>
+                    <TableCell>{contact.email}</TableCell>
+                    <TableCell>{contact.phone}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        contact.category === 'team' ? 'bg-blue-100 text-blue-800' :
-                        contact.category === 'client' ? 'bg-green-100 text-green-800' :
-                        contact.category === 'supplier' ? 'bg-purple-100 text-purple-800' :
-                        'bg-amber-100 text-amber-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryBadgeClass(contact.category || 'client')}`}>
                         {contact.category}
                       </span>
                     </TableCell>
-                    <TableCell>{contact.phone || contact.email || '-'}</TableCell>
-                    <TableCell>{contact.telegramId || '-'}</TableCell>
+                    <TableCell>
+                      {contact.isDriver ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                          Yes
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-600">No</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => openContactProfile(contact)}>
-                          <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">Open</span>
-                        </Button>
-                        <Button size="icon" variant="ghost">
-                          <FileText className="h-4 w-4" />
-                          <span className="sr-only">Documents</span>
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          onClick={() => openTelegramChat(contact.telegramId)}
-                          disabled={!contact.telegramId}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          <span className="sr-only">Chat</span>
-                        </Button>
-                        <Button size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Edit ${contact.name}`)}>
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
-                        <Button size="icon" variant="ghost">
-                          <Trash className="h-4 w-4" />
+                        <Button size="icon" variant="ghost" onClick={() => handleTagContact(contact.id)}>
+                          <Tag className="h-4 w-4" />
+                          <span className="sr-only">Tag</span>
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Delete ${contact.name}`)}>
+                          <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
                         </Button>
                       </div>
@@ -226,7 +225,7 @@ export default function Contacts() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     No contacts found. Try adjusting your search or filters.
                   </TableCell>
                 </TableRow>
@@ -251,130 +250,81 @@ export default function Contacts() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="id">Telegram ID</Label>
-                <Input 
-                  id="id" 
-                  placeholder="Without @ prefix" 
-                  value={newContact.telegramId || ''} 
-                  onChange={(e) => setNewContact({...newContact, telegramId: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input 
                   id="email" 
                   type="email"
-                  value={newContact.email || ''} 
+                  value={newContact.email} 
                   onChange={(e) => setNewContact({...newContact, email: e.target.value})}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input 
                   id="phone" 
-                  value={newContact.phone || ''} 
+                  value={newContact.phone} 
                   onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="category">Category</Label>
                 <Select 
-                  value={newContact.category} 
-                  onValueChange={(value: 'team' | 'client' | 'supplier' | 'driver') => 
-                    setNewContact({...newContact, category: value})
-                  }
+                  value={newContact.category}
+                  onValueChange={(value) => setNewContact({...newContact, category: value})}
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="team">Team</SelectItem>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="supplier">Supplier</SelectItem>
-                    <SelectItem value="driver">Driver</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  id="isDriver" 
+                  type="checkbox"
+                  checked={newContact.isDriver}
+                  onChange={(e) => setNewContact({...newContact, isDriver: e.target.checked})}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor="isDriver">This contact is a driver</Label>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddContact} disabled={!newContact.name}>Add Contact</Button>
+              <Button 
+                onClick={handleAddContact} 
+                disabled={!newContact.name}
+              >
+                Add Contact
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        
-        {/* Contact Profile Dialog */}
-        <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+
+        {/* Add Tag Dialog */}
+        <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Contact Profile</DialogTitle>
+              <DialogTitle>Add Tag</DialogTitle>
             </DialogHeader>
-            {selectedContact && (
-              <div className="grid gap-6">
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
-                  <div className="bg-primary text-primary-foreground w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold">
-                    {selectedContact.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="text-center sm:text-left">
-                    <h3 className="text-lg font-semibold">{selectedContact.name}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedContact.category}</p>
-                    {selectedContact.phone && <p className="text-sm">{selectedContact.phone}</p>}
-                    {selectedContact.email && <p className="text-sm">{selectedContact.email}</p>}
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">Order History</h4>
-                  {selectedContact.orders && selectedContact.orders.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedContact.orders.slice(0, 3).map(order => (
-                        <div key={order.id} className="border rounded p-3 flex justify-between">
-                          <div>
-                            <div className="text-sm font-medium">Order #{order.id}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {format(order.createdAt, 'dd/MM/yy HH:mm')}
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              order.status === 'refunded' ? 'bg-amber-100 text-amber-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {order.status}
-                            </span>
-                            <span className="text-sm font-medium">${order.total.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No order history available</p>
-                  )}
-                </div>
-                
-                <div className="flex gap-2 justify-between">
-                  <Button variant="outline" className="flex-1" size="sm">
-                    Send Location
-                  </Button>
-                  {selectedContact.telegramId && (
-                    <Button 
-                      variant="outline" 
-                      className="flex-1" 
-                      size="sm"
-                      onClick={() => openTelegramChat(selectedContact.telegramId)}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Chat
-                    </Button>
-                  )}
-                  <Button variant="outline" className="flex-1" size="sm">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Documents
-                  </Button>
-                </div>
+            <div className="grid gap-4 py-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Enter tag name"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddTag} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
               </div>
-            )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

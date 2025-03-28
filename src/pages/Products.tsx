@@ -6,17 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Package, Search, Edit, Trash, Plus, Upload, AlertCircle } from 'lucide-react';
+import { Search, Edit, Trash, Plus, Upload, AlertCircle, Tag } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Product } from '@/lib/types';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [newTag, setNewTag] = useState('');
   const [columnMappings, setColumnMappings] = useState({
     name: '',
     category: '',
@@ -67,6 +70,12 @@ export default function Products() {
       taxRate: 7.5
     }
   ]);
+
+  const [productTags, setProductTags] = useState<Record<string, string[]>>({
+    '1': ['New', 'Sale'],
+    '2': ['Premium'],
+    '4': ['Eco-friendly']
+  });
 
   const [newProduct, setNewProduct] = useState<{
     name: string;
@@ -128,6 +137,27 @@ export default function Products() {
     }
   };
 
+  const handleAddTag = () => {
+    if (!newTag.trim() || !selectedProductId) return;
+    
+    setProductTags(prev => {
+      const existingTags = prev[selectedProductId] || [];
+      return {
+        ...prev,
+        [selectedProductId]: [...existingTags, newTag]
+      };
+    });
+    
+    setNewTag('');
+    setIsTagModalOpen(false);
+    toast.success(`Tag "${newTag}" added to product`);
+  };
+
+  const handleTagProduct = (productId: string) => {
+    setSelectedProductId(productId);
+    setIsTagModalOpen(true);
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,6 +167,12 @@ export default function Products() {
     
     return matchesSearch && matchesCategory;
   });
+
+  const formatCurrency = (amount: number) => {
+    const usd = `$${amount.toFixed(2)}`;
+    const riel = `៛${Math.round(amount * 4100)}`; // Assuming 1 USD = 4100 Riel
+    return `${usd} (${riel})`;
+  };
 
   return (
     <Layout>
@@ -161,7 +197,7 @@ export default function Products() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="">All Categories</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
@@ -196,8 +232,8 @@ export default function Products() {
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>In Stock</TableHead>
                 <TableHead>SKU</TableHead>
+                <TableHead>Tags</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -207,24 +243,28 @@ export default function Products() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.inStock > 20 ? 'bg-green-100 text-green-800' :
-                        product.inStock > 5 ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {product.inStock}
-                      </span>
-                    </TableCell>
+                    <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>{product.sku || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(productTags[product.id] || []).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="bg-secondary/30">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Edit ${product.name}`)}>
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
-                        <Button size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" onClick={() => handleTagProduct(product.id)}>
+                          <Tag className="h-4 w-4" />
+                          <span className="sr-only">Tag</span>
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Delete ${product.name}`)}>
                           <Trash className="h-4 w-4" />
                           <span className="sr-only">Delete</span>
                         </Button>
@@ -282,16 +322,6 @@ export default function Products() {
                     <option key={category} value={category} />
                   ))}
                 </datalist>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="inStock">Stock Quantity</Label>
-                <Input 
-                  id="inStock" 
-                  type="number"
-                  min="0"
-                  value={newProduct.inStock || ''} 
-                  onChange={(e) => setNewProduct({...newProduct, inStock: parseInt(e.target.value) || 0})}
-                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="sku">SKU (Optional)</Label>
@@ -404,24 +434,6 @@ export default function Products() {
                 </Select>
               </div>
               
-              <div className="grid gap-2">
-                <Label htmlFor="stockColumn">Stock Column (Optional)</Label>
-                <Select 
-                  onValueChange={(value) => setColumnMappings({...columnMappings, stock: value})}
-                  value={columnMappings.stock}
-                >
-                  <SelectTrigger id="stockColumn">
-                    <SelectValue placeholder="Select column" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Not included</SelectItem>
-                    <SelectItem value="A">Column A</SelectItem>
-                    <SelectItem value="B">Column B</SelectItem>
-                    <SelectItem value="C">Column C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
               <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-md">
                 <AlertCircle className="h-5 w-5" />
                 <span className="text-sm">Please select the columns that match your file structure.</span>
@@ -436,6 +448,29 @@ export default function Products() {
                 Import Products
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Tag Dialog */}
+        <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Tag</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Enter tag name"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddTag} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

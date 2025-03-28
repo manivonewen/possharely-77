@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { CartItem, Product, Contact } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { X, Plus, UserPlus, CreditCard, Trash2, Save, Pause, Check } from 'lucide-react';
+import { X, Plus, UserPlus, Trash2, Save, Pause, Check } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent, 
@@ -69,7 +69,7 @@ const Cart: React.FC<CartProps> = ({
 
   const handleAddContact = () => {
     // In a real app, you would save this to your database
-    const newContactWithId = {
+    const newContactWithId: Contact = {
       ...newContact,
       id: `contact${Date.now()}` // Simple ID generation for demo
     };
@@ -246,7 +246,7 @@ const Cart: React.FC<CartProps> = ({
       </div>
 
       {/* Cart actions */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-2">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
         {showOrderComplete ? (
           <div className="space-y-2">
             <h3 className="text-center font-medium text-green-600 dark:text-green-400 mb-2">
@@ -254,52 +254,48 @@ const Cart: React.FC<CartProps> = ({
             </h3>
             <div className="flex gap-2">
               <Button 
-                className="flex-1 gap-2"
+                className="flex-1"
                 onClick={handleSend}
               >
-                <span>Send</span>
+                Send
               </Button>
               <Button 
                 variant="outline"
-                className="flex-1 gap-2"
+                className="flex-1"
                 onClick={handlePrint}
               >
-                <span>Print</span>
+                Print
               </Button>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <Button 
               variant="outline" 
-              className="justify-start gap-2"
+              className="flex-1"
               onClick={handleSaveCart}
             >
-              <Save className="h-4 w-4" />
-              <span>Save</span>
+              Save
             </Button>
             <Button 
               variant="outline" 
-              className="justify-start gap-2"
+              className="flex-1"
               onClick={handleHoldCart}
             >
-              <Pause className="h-4 w-4" />
-              <span>Hold</span>
+              Hold
             </Button>
             <Button 
               variant="outline" 
-              className="justify-start gap-2 text-red-500 hover:text-red-600"
+              className="flex-1 text-red-500 hover:text-red-600"
               onClick={onClearCart}
             >
-              <Trash2 className="h-4 w-4" />
-              <span>Void</span>
+              Void
             </Button>
             <Button 
-              className="justify-start gap-2"
+              className="flex-1"
               onClick={handleCompleteCart}
             >
-              <Check className="h-4 w-4" />
-              <span>Paid</span>
+              Paid
             </Button>
           </div>
         )}
