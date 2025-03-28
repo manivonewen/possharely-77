@@ -79,3 +79,73 @@ export interface InventoryItem extends Product {
   reorderPoint?: number;
   lastRestocked?: Date;
 }
+
+export interface Contact {
+  id: string;
+  name: string;
+  category: 'team' | 'client' | 'supplier' | 'driver';
+  telegramId?: string;
+  email?: string;
+  phone?: string;
+  orders?: Order[];
+}
+
+export interface SavedCart {
+  id: string;
+  items: CartItem[];
+  subtotal: number;
+  tax: number;
+  discount: number;
+  total: number;
+  status: 'pending' | 'paid' | 'cancelled';
+  createdAt: Date;
+  customerInfo?: CustomerInfo;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: 'income' | 'expense';
+  contactId?: string;
+  contactName?: string;
+  description?: string;
+  date: Date;
+}
+
+export interface StoreSettings {
+  profile: {
+    name: string;
+    storeName: string;
+    telephone?: string;
+    logo?: string;
+  };
+  pos: {
+    language: 'en' | 'fr' | 'es';
+    enableTax: boolean;
+    enableDiscount: boolean;
+    currency: string;
+    currencyRate: number;
+    enableDelivery: boolean;
+    deliveryFee: number;
+  };
+  interface: {
+    advanced: boolean;
+    showInventory: boolean;
+    showTransactions: boolean;
+    showSales: boolean;
+    showSettings: boolean;
+  };
+  integrations: {
+    telegram: boolean;
+    loyverse: boolean;
+    googleSheets: boolean;
+    api: boolean;
+  };
+  documentLayout: {
+    showHeader: boolean;
+    showFooter: boolean;
+    showLogo: boolean;
+    showTaxDetails: boolean;
+    customMessage?: string;
+  };
+}
