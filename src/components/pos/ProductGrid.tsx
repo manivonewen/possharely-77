@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, List, Grid } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface ProductGridProps {
   products: Product[];
   onProductSelect: (product: Product) => void;
   viewMode?: 'table' | 'grid';
+  onViewModeChange?: (mode: string) => void;
   showSku?: boolean;
 }
 
@@ -15,6 +17,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   products, 
   onProductSelect, 
   viewMode = 'grid',
+  onViewModeChange,
   showSku = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,14 +48,30 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             className="input-field w-full pl-10"
           />
         </div>
+        
+        {onViewModeChange && (
+          <ToggleGroup 
+            type="single" 
+            value={viewMode} 
+            onValueChange={(value) => value && onViewModeChange(value)}
+            className="ml-2"
+          >
+            <ToggleGroupItem value="table" aria-label="Table view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="grid" aria-label="Grid view">
+              <Grid className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </div>
 
       <div className="mb-4 flex gap-2 overflow-x-auto py-1">
         <button
           className={`rounded-full px-4 py-1.5 text-sm font-medium button-transition ${
             selectedCategory === null
-              ? 'bg-pos-blue text-white'
-              : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80'
+              ? 'bg-pos-blue text-white dark:bg-blue-600'
+              : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
           }`}
           onClick={() => setSelectedCategory(null)}
         >
@@ -63,8 +82,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             key={category}
             className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap button-transition ${
               selectedCategory === category
-                ? 'bg-pos-blue text-white'
-                : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80'
+                ? 'bg-pos-blue text-white dark:bg-blue-600'
+                : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
             }`}
             onClick={() => setSelectedCategory(category)}
           >

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
@@ -143,7 +142,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col bg-pos-gray">
+    <div className="flex h-screen flex-col bg-pos-gray dark:bg-gray-900">
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
       <div className="flex flex-1 overflow-hidden">
@@ -164,20 +163,11 @@ const Index = () => {
           >
             <div className="grid h-full grid-cols-1 gap-4 p-4">
               <div className="card-container">
-                <div className="mb-4 flex justify-between items-center">
-                  <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grid')}>
-                    <ToggleGroupItem value="table" aria-label="Table view">
-                      <List className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="grid" aria-label="Grid view">
-                      <Grid className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
                 <ProductGrid 
                   products={products} 
                   onProductSelect={handleProductSelect} 
                   viewMode={viewMode}
+                  onViewModeChange={(mode) => setViewMode(mode as 'table' | 'grid')}
                   showSku={false}
                 />
               </div>
@@ -190,7 +180,7 @@ const Index = () => {
       <Drawer open={isCartOpen} onOpenChange={setIsCartOpen}>
         <DrawerTrigger asChild>
           <button 
-            className="fixed bottom-6 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-pos-blue text-white shadow-lg hover:bg-pos-blue/90 transition-colors"
+            className="fixed bottom-6 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-pos-blue text-white shadow-lg hover:bg-pos-blue/90 transition-colors dark:bg-blue-600 dark:hover:bg-blue-700"
             aria-label="Open Cart"
           >
             <ShoppingCart className="h-6 w-6" />
