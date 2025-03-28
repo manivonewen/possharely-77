@@ -19,10 +19,11 @@ export default function Tickets() {
       tax: 3.87,
       discount: 0,
       total: 46.86,
-      status: 'pending',
+      status: 'new order',
       createdAt: new Date('2023-10-15T14:30:00'),
       customerInfo: {
         name: 'John Doe',
+        id: 'CUST-001',
       }
     },
     {
@@ -32,10 +33,11 @@ export default function Tickets() {
       tax: 8.06,
       discount: 10,
       total: 87.56,
-      status: 'pending',
+      status: 'processing',
       createdAt: new Date('2023-10-16T09:45:00'),
       customerInfo: {
         name: 'Jane Smith',
+        id: 'CUST-002',
       }
     },
     {
@@ -45,10 +47,11 @@ export default function Tickets() {
       tax: 2.99,
       discount: 0,
       total: 36.24,
-      status: 'paid',
+      status: 'completed',
       createdAt: new Date('2023-10-16T16:15:00'),
       customerInfo: {
         name: 'Mark Wilson',
+        id: 'CUST-003',
       }
     },
     {
@@ -62,6 +65,7 @@ export default function Tickets() {
       createdAt: new Date('2023-10-17T11:20:00'),
       customerInfo: {
         name: 'Sarah Johnson',
+        id: 'CUST-004',
       }
     }
   ]);
@@ -72,6 +76,7 @@ export default function Tickets() {
       ticket.id.toLowerCase().includes(searchValue) ||
       ticket.status.toLowerCase().includes(searchValue) ||
       ticket.customerInfo?.name?.toLowerCase().includes(searchValue) ||
+      ticket.customerInfo?.id?.toLowerCase().includes(searchValue) ||
       ticket.total.toString().includes(searchValue)
     );
   });
@@ -85,11 +90,30 @@ export default function Tickets() {
     setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
   };
 
+  const formatCurrency = (amount: number) => {
+    const usd = `$${amount.toFixed(2)}`;
+    const riel = `៛${Math.round(amount * 4100)}`; // Assuming 1 USD = 4100 Riel
+    return `${usd} (${riel})`;
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'new order':
+        return 'bg-amber-100 text-amber-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-red-100 text-red-800';
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto py-6">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold">Open Tickets</h1>
+          <h1 className="text-2xl font-bold dark:text-white">Open Tickets</h1>
           
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -103,12 +127,11 @@ export default function Tickets() {
           </div>
         </div>
         
-        <div className="rounded-md border">
+        <div className="rounded-md border dark:border-gray-700">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ticket ID</TableHead>
-                <TableHead>Customer</TableHead>
+                <TableHead>Customer ID</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Status</TableHead>
@@ -120,20 +143,15 @@ export default function Tickets() {
               {filteredTickets.length > 0 ? (
                 filteredTickets.map((ticket) => (
                   <TableRow key={ticket.id}>
-                    <TableCell className="font-medium">{ticket.id}</TableCell>
-                    <TableCell>{ticket.customerInfo?.name || 'Guest'}</TableCell>
+                    <TableCell className="font-medium">{ticket.customerInfo?.id || 'Guest'}</TableCell>
                     <TableCell>{format(ticket.createdAt, 'dd/MM/yy')}</TableCell>
                     <TableCell>{format(ticket.createdAt, 'HH:mm')}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === 'paid' ? 'bg-green-100 text-green-800' :
-                        ticket.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(ticket.status)}`}>
                         {ticket.status}
                       </span>
                     </TableCell>
-                    <TableCell>${ticket.total.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(ticket.total)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
@@ -159,7 +177,7 @@ export default function Tickets() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     No open tickets found.
                   </TableCell>
                 </TableRow>

@@ -1,179 +1,82 @@
 
-import React, { useState } from 'react';
-import { Search, List, Grid } from 'lucide-react';
+import React from 'react';
 import { Product } from '@/lib/types';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Grid, List } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface ProductGridProps {
   products: Product[];
   onProductSelect: (product: Product) => void;
-  viewMode?: 'table' | 'grid';
+  viewMode: 'grid' | 'table';
   onViewModeChange?: (mode: string) => void;
   showSku?: boolean;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ 
-  products, 
-  onProductSelect, 
-  viewMode = 'grid',
+const ProductGrid: React.FC<ProductGridProps> = ({
+  products,
+  onProductSelect,
+  viewMode,
   onViewModeChange,
-  showSku = false
+  showSku = true,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toFixed(2)}`;
+  };
 
-  const categories = Array.from(new Set(products.map((product) => product.category)));
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.barcode?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
-    
-    return matchesSearch && matchesCategory;
-  });
+  if (viewMode === 'table') {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Price</th>
+              {showSku && (
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">SKU</th>
+              )}
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Category</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+            {products.map((product) => (
+              <tr 
+                key={product.id} 
+                onClick={() => onProductSelect(product)}
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{product.name}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{formatCurrency(product.price)}</td>
+                {showSku && (
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{product.sku}</td>
+                )}
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{product.category}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field w-full pl-10"
-          />
-        </div>
-        
-        {onViewModeChange && (
-          <ToggleGroup 
-            type="single" 
-            value={viewMode} 
-            onValueChange={(value) => value && onViewModeChange(value)}
-            className="ml-2"
-          >
-            <ToggleGroupItem value="table" aria-label="Table view">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="grid" aria-label="Grid view">
-              <Grid className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        )}
-      </div>
-
-      <div className="mb-4 flex gap-2 overflow-x-auto py-1">
-        <button
-          className={`rounded-full px-4 py-1.5 text-sm font-medium button-transition ${
-            selectedCategory === null
-              ? 'bg-pos-blue text-white dark:bg-blue-600'
-              : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-          }`}
-          onClick={() => setSelectedCategory(null)}
+    <div className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {products.map((product) => (
+        <div
+          key={product.id}
+          onClick={() => onProductSelect(product)}
+          className="flex cursor-pointer flex-col rounded-lg border border-gray-200 bg-white p-4 transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
         >
-          All
-        </button>
-        {categories.map((category) => (
-          <button
-            key={category}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap button-transition ${
-              selectedCategory === category
-                ? 'bg-pos-blue text-white dark:bg-blue-600'
-                : 'bg-pos-gray text-pos-dark hover:bg-pos-gray/80 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-            }`}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {viewMode === 'grid' ? (
-        <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto pr-1 pb-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="product-item animate-fade-in flex flex-col"
-              onClick={() => onProductSelect(product)}
-            >
-              <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-pos-gray">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-pos-gray text-gray-400">
-                    No image
-                  </div>
-                )}
-              </div>
-              <h3 className="text-sm font-medium line-clamp-2">{product.name}</h3>
-              <div className="mt-auto flex items-end justify-between pt-2">
-                <span className="text-sm font-semibold text-pos-blue">
-                  ${product.price.toFixed(2)}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {product.inStock > 0 ? `${product.inStock} in stock` : 'Out of stock'}
-                </span>
-              </div>
-              {showSku && product.sku && (
-                <div className="mt-1 text-xs text-gray-400">SKU: {product.sku}</div>
-              )}
-            </div>
-          ))}
-
-          {filteredProducts.length === 0 && (
-            <div className="col-span-full flex h-40 flex-col items-center justify-center text-center text-gray-500">
-              <p className="mt-2">No products found</p>
-            </div>
+          <div className="mb-2 h-32 w-full rounded-md bg-gray-100 dark:bg-gray-700"></div>
+          <h3 className="font-medium text-gray-900 dark:text-white">{product.name}</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {formatCurrency(product.price)}
+          </p>
+          {showSku && (
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{product.sku}</p>
           )}
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{product.category}</p>
         </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto pr-1 pb-4">
-          <Table className="cursor-pointer">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                {showSku && <TableHead>SKU</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-                <TableRow key={product.id} onClick={() => onProductSelect(product)} className="hover:bg-pos-gray/50">
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      product.inStock > 20 ? 'bg-green-100 text-green-800' :
-                      product.inStock > 5 ? 'bg-amber-100 text-amber-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {product.inStock}
-                    </span>
-                  </TableCell>
-                  {showSku && <TableCell>{product.sku || '-'}</TableCell>}
-                </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={showSku ? 5 : 4} className="h-32 text-center text-gray-500">
-                    No products found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      ))}
     </div>
   );
 };

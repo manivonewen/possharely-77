@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
@@ -91,6 +92,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const { user, isLoading } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -141,6 +143,22 @@ const Index = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Extract unique categories from products
+  const categories = Array.from(new Set(products.map((product) => product.category)));
+
+  // Filter products by selected categories (if any are selected)
+  const filteredProducts = selectedCategories.length > 0
+    ? products.filter((product) => selectedCategories.includes(product.category))
+    : products;
+
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
   return (
     <div className="flex h-screen flex-col bg-pos-gray dark:bg-gray-900">
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
@@ -163,8 +181,40 @@ const Index = () => {
           >
             <div className="grid h-full grid-cols-1 gap-4 p-4">
               <div className="card-container">
+                <div className="border-b pb-4 flex flex-wrap items-center justify-between gap-2 p-4">
+                  {/* View mode toggle moved before categories */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">View:</span>
+                    <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grid')}>
+                      <ToggleGroupItem value="table" aria-label="View as table">
+                        <List className="h-4 w-4" />
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="grid" aria-label="View as grid">
+                        <Grid className="h-4 w-4" />
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                  
+                  {/* Category toggles */}
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => handleCategoryToggle(category)}
+                        className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                          selectedCategories.includes(category)
+                            ? 'bg-pos-blue text-white dark:bg-blue-600'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
                 <ProductGrid 
-                  products={products} 
+                  products={filteredProducts} 
                   onProductSelect={handleProductSelect} 
                   viewMode={viewMode}
                   onViewModeChange={(mode) => setViewMode(mode as 'table' | 'grid')}

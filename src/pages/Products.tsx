@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Layout } from '@/components/layout';
+import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Package, Search, Edit, Trash, Plus, Upload, AlertCircle } from 'lucide-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Product } from '@/lib/types';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -160,7 +161,7 @@ export default function Products() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
