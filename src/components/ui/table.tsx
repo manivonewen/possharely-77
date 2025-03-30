@@ -66,19 +66,34 @@ const TableRow = React.forwardRef<
 ))
 TableRow.displayName = "TableRow"
 
+interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  sortable?: boolean;
+  onSort?: () => void;
+}
+
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-      className
-    )}
-    {...props}
-  />
-))
+  TableHeadProps
+>(({ className, sortable, onSort, ...props }, ref) => {
+  const handleClick = () => {
+    if (sortable && onSort) {
+      onSort();
+    }
+  };
+
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        sortable ? "cursor-pointer" : "",
+        className
+      )}
+      onClick={handleClick}
+      {...props}
+    />
+  );
+})
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
