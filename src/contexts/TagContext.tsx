@@ -4,6 +4,7 @@ interface Tag {
   name: string;
   color: string;
   textColor: string;
+  isDriver?: boolean; // Add optional isDriver property
 }
 
 const tags: Tag[] = [
@@ -11,6 +12,7 @@ const tags: Tag[] = [
   { name: 'Brand', color: 'bg-purple-900', textColor: 'text-purple-300' },
   { name: 'Supplier', color: 'bg-orange-700', textColor: 'text-orange-900' },
   { name: 'View', color: 'bg-blue-700', textColor: 'text-blue-900' },
+  { name: 'Driver', color: 'bg-pink-700', textColor: 'text-pink-900', isDriver: true }, // Assign isDriver property
 ];
 
 interface TagContextProps {

@@ -18,6 +18,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 
+// Default settings for the store
 const defaultSettings: StoreSettings = {
   profile: {
     name: 'Admin User',
@@ -72,6 +73,10 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [isSmartThemeEnabled, setIsSmartThemeEnabled] = useState(false); // Track smart theme mode
 
+  /**
+   * Updates the primary color of the interface.
+   * @param color - The new primary color.
+   */
   const handleColorChange = (color: 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'teal') => {
     setSettings({
       ...settings,
@@ -86,10 +91,19 @@ const Settings = () => {
     updateDerivedColors(color);
   };
 
+  /**
+   * Updates all derived colors based on the primary color.
+   * @param color - The primary color.
+   */
   const updateDerivedColors = (color: string) => {
     console.log(`Updating all derived colors based on ${color}`);
   };
 
+  /**
+   * Converts a color name to its HSL value.
+   * @param color - The color name.
+   * @returns The HSL value of the color.
+   */
   const getPrimaryColorHSL = (color: string): string => {
     switch (color) {
       case 'blue': return '221 83% 53%';
@@ -102,11 +116,19 @@ const Settings = () => {
     }
   };
 
+  /**
+   * Saves the current settings.
+   */
   const handleSaveSettings = () => {
     console.log('Saving settings:', settings);
     toast.success('Settings saved successfully');
   };
 
+  /**
+   * Toggles a specific setting based on its path.
+   * @param path - The path to the setting in the settings object.
+   * @param value - The new value for the setting.
+   */
   const handleToggleSetting = (path: string, value: boolean) => {
     const pathParts = path.split('.');
     setSettings(prev => {

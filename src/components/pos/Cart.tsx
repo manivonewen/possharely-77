@@ -89,6 +89,7 @@ const Cart: React.FC<CartProps> = ({
     const newContactWithId: Contact = {
       ...newContact,
       id: `contact${Date.now()}`, // Simple ID generation for demo
+      category: 'Client', // Default category
     };
 
     setSelectedContacts([...selectedContacts, newContactWithId]);
