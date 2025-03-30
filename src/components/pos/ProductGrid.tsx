@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Product } from '@/lib/types';
 import { Grid, List } from 'lucide-react';
@@ -22,8 +21,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 }) => {
   const formatCurrency = (amount: number) => {
     const usd = `$${amount.toFixed(2)}`;
-    const riel = `៛${Math.round(amount * 4100)}`; // Assuming 1 USD = 4100 Riel
-    return `${usd} (${riel})`;
+    return `${usd}`;
   };
 
   if (viewMode === 'table') {
@@ -54,7 +52,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                   onClick={() => onProductSelect(product)}
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
-                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell className="font-medium w-3/4">{product.name}</TableCell>
                   <TableCell>{formatCurrency(product.price)}</TableCell>
                   {showSku && (
                     <TableCell>{product.sku}</TableCell>

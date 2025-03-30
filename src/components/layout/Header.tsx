@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, User, ChevronDown, LogOut } from 'lucide-react';
@@ -33,6 +32,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
         return 'Transactions';
       case '/settings':
         return 'Settings';
+      case '/contacts':
+        return 'Contacts';
+      case '/developer': // Add case for Developer
+        return 'Developer';
       default:
         return 'POS';
     }

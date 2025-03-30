@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -12,6 +11,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Check, Palette, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { StoreSettings } from '@/lib/types';
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 const defaultSettings: StoreSettings = {
   profile: {
@@ -27,10 +32,11 @@ const defaultSettings: StoreSettings = {
     currencyRate: 4100, // 1 USD = 4100 Riel
     enableDelivery: false,
     deliveryFee: 5,
+    showRiel: false, // Added showRiel
   },
   interface: {
     advanced: false,
-    showInventory: true,
+    showInventory: false, // Track stock disabled by default
     showTransactions: true,
     showSales: true,
     showSettings: true,
@@ -48,6 +54,7 @@ const defaultSettings: StoreSettings = {
     showLogo: true,
     showTaxDetails: false,
     customMessage: 'Thank you for your business!',
+    enableCustomMessage: false, // Add toggle for custom message
   },
 };
 
@@ -63,9 +70,9 @@ const themeColors = [
 const Settings = () => {
   const [settings, setSettings] = useState<StoreSettings>(defaultSettings);
   const [activeTab, setActiveTab] = useState('general');
+  const [isSmartThemeEnabled, setIsSmartThemeEnabled] = useState(false); // Track smart theme mode
 
   const handleColorChange = (color: 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'teal') => {
-    // Update primary color setting
     setSettings({
       ...settings,
       interface: {
@@ -73,24 +80,17 @@ const Settings = () => {
         primaryColor: color,
       },
     });
-    
-    // In a real app, this would update global CSS variables or a theme context
-    // For now, we'll just show a toast
+
     toast.success(`Theme color updated to ${color}`);
-    
-    // Update CSS variables for demo purposes
     document.documentElement.style.setProperty('--primary', getPrimaryColorHSL(color));
     updateDerivedColors(color);
   };
-  
+
   const updateDerivedColors = (color: string) => {
-    // This would update all the derived colors in a real app
-    // Just a simple demonstration for now
     console.log(`Updating all derived colors based on ${color}`);
   };
-  
+
   const getPrimaryColorHSL = (color: string): string => {
-    // Return appropriate HSL values based on color
     switch (color) {
       case 'blue': return '221 83% 53%';
       case 'green': return '142 76% 36%';
@@ -103,7 +103,6 @@ const Settings = () => {
   };
 
   const handleSaveSettings = () => {
-    // In a real app, save to database or localStorage
     console.log('Saving settings:', settings);
     toast.success('Settings saved successfully');
   };
@@ -113,13 +112,11 @@ const Settings = () => {
     setSettings(prev => {
       const newSettings = { ...prev };
       let current: any = newSettings;
-      
-      // Navigate to the nested property
+
       for (let i = 0; i < pathParts.length - 1; i++) {
         current = current[pathParts[i]];
       }
-      
-      // Set the value
+
       current[pathParts[pathParts.length - 1]] = value;
       return newSettings;
     });
@@ -127,12 +124,7 @@ const Settings = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your POS settings and preferences.</p>
-        </div>
-
+      <div className="container mx-auto py-6 overflow-y-hidden">
         <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">General</TabsTrigger>
@@ -140,117 +132,265 @@ const Settings = () => {
             <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
           </TabsList>
-          
+
           {/* General Settings */}
           <TabsContent value="general" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Information</CardTitle>
-                <CardDescription>
-                  Your store details used on receipts and invoices.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="storeName">Store Name</Label>
-                  <Input 
-                    id="storeName" 
-                    value={settings.profile.storeName} 
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, storeName: e.target.value }
-                    })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Owner/Manager Name</Label>
-                  <Input 
-                    id="name" 
-                    value={settings.profile.name} 
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, name: e.target.value }
-                    })} 
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="telephone">Telephone</Label>
-                  <Input 
-                    id="telephone" 
-                    value={settings.profile.telephone || ''} 
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, telephone: e.target.value }
-                    })} 
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Receipt & Invoice Settings</CardTitle>
-                <CardDescription>
-                  Customize how receipts and invoices are displayed.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="showHeader">Show Header</Label>
-                  <Switch 
-                    id="showHeader"
-                    checked={settings.documentLayout.showHeader}
-                    onCheckedChange={(checked) => handleToggleSetting('documentLayout.showHeader', checked)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="showFooter">Show Footer</Label>
-                  <Switch 
-                    id="showFooter"
-                    checked={settings.documentLayout.showFooter}
-                    onCheckedChange={(checked) => handleToggleSetting('documentLayout.showFooter', checked)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="showLogo">Show Logo</Label>
-                  <Switch 
-                    id="showLogo"
-                    checked={settings.documentLayout.showLogo}
-                    onCheckedChange={(checked) => handleToggleSetting('documentLayout.showLogo', checked)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="customMessage">Custom Receipt Message</Label>
-                  <Textarea 
-                    id="customMessage" 
-                    value={settings.documentLayout.customMessage || ''} 
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      documentLayout: { 
-                        ...settings.documentLayout, 
-                        customMessage: e.target.value 
-                      }
-                    })}
-                    placeholder="Thank you for your business!"
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <Accordion type="single" collapsible defaultValue="">
+              <AccordionItem value="store-info">
+                <AccordionTrigger className="hover:no-underline">
+                  <CardHeader>
+                    <CardTitle>Store Information</CardTitle>
+                  </CardHeader>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="storeName">Store Name</Label>
+                      <Input 
+                        id="storeName" 
+                        value={settings.profile.storeName} 
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          profile: { ...settings.profile, storeName: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Owner/Manager Name</Label>
+                      <Input 
+                        id="name" 
+                        value={settings.profile.name} 
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          profile: { ...settings.profile, name: e.target.value }
+                        })} 
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="telephone">Telephone</Label>
+                      <Input 
+                        id="telephone" 
+                        value={settings.profile.telephone || ''} 
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          profile: { ...settings.profile, telephone: e.target.value }
+                        })} 
+                      />
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="receipt-settings">
+                <AccordionTrigger className="hover:no-underline">
+                  <CardHeader>
+                    <CardTitle>Receipt & Invoice Settings</CardTitle>
+                  </CardHeader>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showHeader">Show Header</Label>
+                      <Switch 
+                        id="showHeader"
+                        checked={settings.documentLayout.showHeader}
+                        onCheckedChange={(checked) => handleToggleSetting('documentLayout.showHeader', checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showFooter">Show Footer</Label>
+                      <Switch 
+                        id="showFooter"
+                        checked={settings.documentLayout.showFooter}
+                        onCheckedChange={(checked) => handleToggleSetting('documentLayout.showFooter', checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="showLogo">Show Logo</Label>
+                      <Switch 
+                        id="showLogo"
+                        checked={settings.documentLayout.showLogo}
+                        onCheckedChange={(checked) => handleToggleSetting('documentLayout.showLogo', checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="enableCustomMessage">Enable Custom Receipt Message</Label>
+                      <Switch
+                        id="enableCustomMessage"
+                        checked={settings.documentLayout.enableCustomMessage}
+                        onCheckedChange={(checked) =>
+                          setSettings((prev) => ({
+                            ...prev,
+                            documentLayout: {
+                              ...prev.documentLayout,
+                              enableCustomMessage: checked,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                    {settings.documentLayout.enableCustomMessage && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="customMessage">Custom Receipt Message</Label>
+                        <Textarea 
+                          id="customMessage" 
+                          value={settings.documentLayout.customMessage || ''} 
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            documentLayout: { 
+                              ...settings.documentLayout, 
+                              customMessage: e.target.value 
+                            }
+                          })}
+                          placeholder="Thank you for your business!"
+                          rows={3}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Backup and Restore */}
+              <AccordionItem value="backup-restore">
+                <AccordionTrigger className="hover:no-underline">
+                  <CardHeader>
+                    <CardTitle>Backup and Restore</CardTitle>
+                  </CardHeader>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    {/* Backup */}
+                    <div>
+                      <h3 className="text-lg font-semibold">Backup</h3>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="autoBackup">Auto</Label>
+                        <Switch id="autoBackup" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="dailyBackup">Daily</Label>
+                        <Switch id="dailyBackup" checked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="connectDrive">Connect Drive</Label>
+                        <Switch
+                          id="connectDrive"
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              // Expand account field logic
+                            }
+                          }}
+                        />
+                      </div>
+                      {/* Account Field */}
+                      <div className="mt-2">
+                        <Label htmlFor="googleAccount">Google Account</Label>
+                        <Input id="googleAccount" placeholder="Connect with Magic Link" />
+                      </div>
+                    </div>
+
+                    {/* Export Data */}
+                    <div>
+                      <h3 className="text-lg font-semibold">Export Data</h3>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="productsInventory">Products and Inventory</Label>
+                        <Switch id="productsInventory" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="ordersContacts">Orders and Contacts</Label>
+                        <Switch id="ordersContacts" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="salesTransactions">Sales and Transactions</Label>
+                        <Switch id="salesTransactions" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="settingsPreferences">Settings and Preferences</Label>
+                        <Switch id="settingsPreferences" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="incrementalExport">Incremental</Label>
+                        <Switch id="incrementalExport" checked />
+                      </div>
+                      {/* Date Picker */}
+                      <div className="mt-2">
+                        <Label htmlFor="datePicker">Select Date Range</Label>
+                        <Input id="datePicker" type="date" />
+                      </div>
+                    </div>
+
+                    {/* Import Data */}
+                    <div>
+                      <h3 className="text-lg font-semibold">Import Data</h3>
+                      <div className="grid gap-2">
+                        <Label htmlFor="fileUpload">From Backup Files (JSON/XML)</Label>
+                        <Input id="fileUpload" type="file" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="customTables">Custom Tables (CSV/XLSX)</Label>
+                        <Input id="customTables" type="file" />
+                      </div>
+                      {/* Column Mapping */}
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium">Map Columns</h4>
+                        <div className="grid gap-2">
+                          <div className="flex items-center gap-2">
+                            <Input placeholder="Name" />
+                            <Input placeholder="Category" />
+                            <Input placeholder="Price" />
+                            <Button variant="outline" size="sm">+</Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sync Button */}
+                    <Button className="mt-4">Sync</Button>
+                  </CardContent>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
-          
+
           {/* Appearance Settings */}
           <TabsContent value="appearance" className="space-y-4">
+            {/* Smart Theme Card */}
             <Card>
+              <CardHeader className="flex items-center justify-between">
+                <CardTitle className="text-left">Smart Theme</CardTitle>
+                <Switch
+                  checked={isSmartThemeEnabled}
+                  onCheckedChange={(checked) => setIsSmartThemeEnabled(checked)}
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Interface color theming based on order type
+                </p>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-green-500"></div>
+                    <span className="text-sm">In-store order</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-teal-500"></div>
+                    <span className="text-sm">Online/delivery order</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-orange-500"></div>
+                    <span className="text-sm">Purchase order</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Theme Card */}
+            <Card className={isSmartThemeEnabled ? 'opacity-50 pointer-events-none' : ''}>
               <CardHeader>
                 <CardTitle>Theme</CardTitle>
-                <CardDescription>
-                  Customize the look and feel of your POS system.
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label className="mb-3 block">Primary Color</Label>
                   <div className="flex flex-wrap gap-4">
                     {themeColors.map((color) => (
                       <div 
@@ -274,21 +414,17 @@ const Settings = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* Features Settings */}
           <TabsContent value="features" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Feature Toggles</CardTitle>
-                <CardDescription>
-                  Enable or disable specific features of your POS system.
-                </CardDescription>
+                <CardTitle>Features</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="enableTax" className="block">Enable Tax</Label>
-                    <p className="text-sm text-muted-foreground">Show tax calculations in cart and receipts</p>
                   </div>
                   <Switch 
                     id="enableTax"
@@ -299,7 +435,6 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="enableDiscount" className="block">Enable Discounts</Label>
-                    <p className="text-sm text-muted-foreground">Allow adding discounts to items and orders</p>
                   </div>
                   <Switch 
                     id="enableDiscount"
@@ -310,7 +445,6 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="enableDelivery" className="block">Enable Delivery</Label>
-                    <p className="text-sm text-muted-foreground">Show delivery options and fees</p>
                   </div>
                   <Switch 
                     id="enableDelivery"
@@ -321,7 +455,6 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="showInventory" className="block">Track Inventory</Label>
-                    <p className="text-sm text-muted-foreground">Track and show product stock levels</p>
                   </div>
                   <Switch 
                     id="showInventory"
@@ -329,24 +462,30 @@ const Settings = () => {
                     onCheckedChange={(checked) => handleToggleSetting('interface.showInventory', checked)}
                   />
                 </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="showRiel" className="block">Show Riel Prices</Label>
+                  </div>
+                  <Switch 
+                    id="showRiel"
+                    checked={settings.pos.showRiel}
+                    onCheckedChange={(checked) => handleToggleSetting('pos.showRiel', checked)}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* Integrations Settings */}
           <TabsContent value="integrations" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>External Integrations</CardTitle>
-                <CardDescription>
-                  Connect your POS to external services.
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="googleSheets" className="block">Google Sheets</Label>
-                    <p className="text-sm text-muted-foreground">Export sales data to Google Sheets</p>
                   </div>
                   <Switch 
                     id="googleSheets"
@@ -357,7 +496,6 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="apiAccess" className="block">API Access</Label>
-                    <p className="text-sm text-muted-foreground">Enable API for external integrations</p>
                   </div>
                   <Switch 
                     id="apiAccess"
@@ -369,7 +507,7 @@ const Settings = () => {
             </Card>
           </TabsContent>
         </Tabs>
-        
+
         <div className="mt-6 flex justify-end">
           <Button 
             onClick={handleSaveSettings}

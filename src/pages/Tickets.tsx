@@ -1,184 +1,204 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, ShoppingBag, ExternalLink, Trash } from 'lucide-react';
-import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { SavedCart } from '@/lib/types';
+import { Search, Edit, Trash, DollarSign, RefreshCw, Plus, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
-export default function Tickets() {
+const Tickets = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const [tickets, setTickets] = useState<SavedCart[]>([
+  const [savedCarts, setSavedCarts] = useState<SavedCart[]>([
     {
-      id: 'ticket-001',
+      id: 'cart-001',
       items: [],
-      subtotal: 42.99,
-      tax: 3.87,
+      subtotal: 45.5,
+      tax: 4.55,
       discount: 0,
-      total: 46.86,
+      total: 50.05,
       status: 'new order',
       createdAt: new Date('2023-10-15T14:30:00'),
-      customerInfo: {
-        name: 'John Doe',
-        id: 'CUST-001',
-      }
+      customerInfo: { name: 'John Doe' },
     },
     {
-      id: 'ticket-002',
+      id: 'cart-002',
       items: [],
-      subtotal: 89.50,
-      tax: 8.06,
-      discount: 10,
-      total: 87.56,
+      subtotal: 30.0,
+      tax: 3.0,
+      discount: 0,
+      total: 33.0,
       status: 'processing',
       createdAt: new Date('2023-10-16T09:45:00'),
-      customerInfo: {
-        name: 'Jane Smith',
-        id: 'CUST-002',
-      }
+      customerInfo: { name: 'Jane Smith' },
     },
-    {
-      id: 'ticket-003',
-      items: [],
-      subtotal: 33.25,
-      tax: 2.99,
-      discount: 0,
-      total: 36.24,
-      status: 'completed',
-      createdAt: new Date('2023-10-16T16:15:00'),
-      customerInfo: {
-        name: 'Mark Wilson',
-        id: 'CUST-003',
-      }
-    },
-    {
-      id: 'ticket-004',
-      items: [],
-      subtotal: 124.75,
-      tax: 11.23,
-      discount: 15,
-      total: 121.98,
-      status: 'cancelled',
-      createdAt: new Date('2023-10-17T11:20:00'),
-      customerInfo: {
-        name: 'Sarah Johnson',
-        id: 'CUST-004',
-      }
-    }
   ]);
+  const [confirmingAction, setConfirmingAction] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const filteredTickets = tickets.filter(ticket => {
-    const searchValue = searchTerm.toLowerCase();
-    return (
-      ticket.id.toLowerCase().includes(searchValue) ||
-      ticket.status.toLowerCase().includes(searchValue) ||
-      ticket.customerInfo?.name?.toLowerCase().includes(searchValue) ||
-      ticket.customerInfo?.id?.toLowerCase().includes(searchValue) ||
-      ticket.total.toString().includes(searchValue)
+  const filteredCarts = savedCarts.filter(cart =>
+    cart.customerInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleConfirmAction = (cartId: string, action: () => void) => {
+    if (confirmingAction === cartId) {
+      action();
+      setConfirmingAction(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    } else {
+      setConfirmingAction(cartId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setConfirmingAction(null);
+        timeoutRef.current = null;
+      }, 3000); // Confirm icon visible for 3 seconds only
+    }
+  };
+
+  const handleMarkAsProcessing = (cartId: string) => {
+    setSavedCarts(prev =>
+      prev.map(cart =>
+        cart.id === cartId ? { ...cart, status: 'processing' } : cart
+      )
     );
-  });
-
-  const handleResume = (ticketId: string) => {
-    // Logic to resume the cart (would typically load the cart into the active session)
-    console.log(`Resuming ticket ${ticketId}`);
+    toast.success('Cart marked as processing.');
   };
 
-  const handleDelete = (ticketId: string) => {
-    setTickets(prevTickets => prevTickets.filter(ticket => ticket.id !== ticketId));
+  const handleMarkAsCompleted = (cartId: string) => {
+    setSavedCarts(prev =>
+      prev.map(cart =>
+        cart.id === cartId ? { ...cart, status: 'completed' } : cart
+      )
+    );
+    toast.success('Cart marked as completed.');
   };
 
-  const formatCurrency = (amount: number) => {
-    const usd = `$${amount.toFixed(2)}`;
-    const riel = `៛${Math.round(amount * 4100)}`; // Assuming 1 USD = 4100 Riel
-    return `${usd} (${riel})`;
+  const handleDeleteCart = (cartId: string) => {
+    setSavedCarts(prev => prev.filter(cart => cart.id !== cartId));
+    toast.success('Cart deleted successfully.');
   };
 
-  const getStatusBadgeClass = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
       case 'new order':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-yellow-100 text-yellow-800';
       case 'processing':
         return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
       default:
-        return 'bg-red-100 text-red-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold dark:text-white">Open Tickets</h1>
-          
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="p-6" style={{ marginTop: '-5.3rem', marginBottom: 'calc(6rem + var(--existing-margin))' }}>
+        <div className="mb-4 flex items-center gap-4">
+          <div className="relative w-1/2 sm:w-1/3 lg:w-1/4">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input
-              type="search"
-              placeholder="Search tickets..."
-              className="w-full pl-8"
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full"
             />
           </div>
+          <button
+            onClick={() => console.log('Add Ticket')}
+            className="p-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+            aria-label="Add Ticket"
+          >
+            <Plus size={16} />
+          </button>
         </div>
-        
-        <div className="rounded-md border dark:border-gray-700">
+
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTickets.length > 0 ? (
-                filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell className="font-medium">{ticket.customerInfo?.id || 'Guest'}</TableCell>
-                    <TableCell>{format(ticket.createdAt, 'dd/MM/yy')}</TableCell>
-                    <TableCell>{format(ticket.createdAt, 'HH:mm')}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(ticket.status)}`}>
-                        {ticket.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{formatCurrency(ticket.total)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          onClick={() => handleResume(ticket.id)}
-                          disabled={ticket.status === 'cancelled'}
+              {filteredCarts.map(cart => (
+                <TableRow key={cart.id}>
+                  <TableCell>{cart.customerInfo?.name || 'N/A'}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
+                        cart.status
+                      )}`}
+                    >
+                      {cart.status.charAt(0).toUpperCase() + cart.status.slice(1)}
+                    </span>
+                  </TableCell>
+                  <TableCell>${cart.total.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      {cart.status !== 'processing' && cart.status !== 'completed' && (
+                        <button
+                          className={`p-2 rounded-full ${
+                            confirmingAction === cart.id
+                              ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                          }`}
+                          onClick={() =>
+                            handleConfirmAction(cart.id, () => handleMarkAsProcessing(cart.id))
+                          }
                         >
-                          <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">Resume</span>
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => handleDelete(ticket.id)}
+                          {confirmingAction === cart.id ? <Check size={16} /> : <RefreshCw size={16} />}
+                        </button>
+                      )}
+                      {cart.status !== 'completed' && (
+                        <button
+                          className={`p-2 rounded-full ${
+                            confirmingAction === cart.id
+                              ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}
+                          onClick={() =>
+                            handleConfirmAction(cart.id, () => handleMarkAsCompleted(cart.id))
+                          }
                         >
-                          <Trash className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+                          {confirmingAction === cart.id ? <Check size={16} /> : <DollarSign size={16} />}
+                        </button>
+                      )}
+                      <button
+                        className="p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                        disabled={cart.status === 'completed'}
+                        onClick={() => console.log('Edit cart', cart)}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        className={`p-2 rounded-full ${
+                          confirmingAction === cart.id
+                            ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                            : 'bg-red-100 text-red-600 hover:bg-red-200'
+                        }`}
+                        onClick={() =>
+                          handleConfirmAction(cart.id, () => handleDeleteCart(cart.id))
+                        }
+                      >
+                        {confirmingAction === cart.id ? <Check size={16} /> : <Trash size={16} />}
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredCarts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    No open tickets found.
+                  <TableCell colSpan={4} className="text-center py-4 text-gray-500">
+                    No tickets found
                   </TableCell>
                 </TableRow>
               )}
@@ -188,4 +208,6 @@ export default function Tickets() {
       </div>
     </Layout>
   );
-}
+};
+
+export default Tickets;

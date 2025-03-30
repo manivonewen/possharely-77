@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -34,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} />
-        
+
         {/* Overlay for mobile when sidebar is open */}
         {isSidebarOpen && (
           <div
@@ -42,8 +41,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             onClick={toggleSidebar}
           />
         )}
-        
-        <main className={`flex-1 overflow-auto transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : ''}`}>
+
+        <main className={`flex-1 overflow-auto transition-all duration-300 hide-scrollbar`}>
           {children}
         </main>
       </div>

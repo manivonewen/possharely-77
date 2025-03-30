@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -84,12 +83,7 @@ export interface InventoryItem extends Product {
 export interface Contact {
   id: string;
   name: string;
-  category?: 'team' | 'client' | 'supplier' | 'driver';
-  telegramId?: string;
-  email?: string;
-  phone?: string;
-  orders?: Order[];
-  isDriver?: boolean;
+  category: string;
 }
 
 export interface SavedCart {
@@ -129,6 +123,7 @@ export interface StoreSettings {
     currencyRate: number;
     enableDelivery: boolean;
     deliveryFee: number;
+    showRiel: boolean;
   };
   interface: {
     advanced: boolean;
@@ -151,4 +146,15 @@ export interface StoreSettings {
     showTaxDetails: boolean;
     customMessage?: string;
   };
+}
+
+export interface PosSettings {
+  language: string;
+  enableTax: boolean;
+  enableDiscount: boolean;
+  currency: string;
+  currencyRate: number;
+  enableDelivery: boolean;
+  deliveryFee: number;
+  showRiel: boolean;
 }

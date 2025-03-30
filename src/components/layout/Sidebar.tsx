@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -12,7 +11,8 @@ import {
   DollarSign,
   Settings,
   Moon,
-  Sun
+  Sun,
+  Code // Import icon for Developer page
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,13 +40,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       path: '/products',
       icon: <Package size={20} />,
     },
+    // {
+    //   name: 'Inventory',
+    //   path: '/inventory',
+    //   icon: <ListCheck size={20} />,
+    // },
     {
-      name: 'Inventory',
-      path: '/inventory',
-      icon: <ListCheck size={20} />,
-    },
-    {
-      name: 'Orders',
+      name: 'Sales', // Renamed from "Orders" to "Sales"
       path: '/sales',
       icon: <ClipboardList size={20} />,
     },
@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     },
     {
       name: 'Contacts',
-      path: '/contacts',
+      path: '/contacts', // Ensure this matches the Contacts page route
       icon: <Users size={20} />,
     },
     {
@@ -70,13 +70,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       path: '/settings',
       icon: <Settings size={20} />,
     },
+    {
+      name: 'Developer',
+      path: '/developer',
+      icon: <Code size={20} />,
+    },
   ];
 
   return (
     <aside
       className={`fixed left-0 top-16 bottom-0 z-30 w-64 transform border-r border-pos-border bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:static lg:translate-x-0`}
+      } lg:static lg:translate-x-0 overflow-hidden`}
     >
       <div className="flex h-full flex-col">
         <div className="p-4">

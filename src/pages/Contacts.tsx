@@ -1,333 +1,402 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Layout } from '@/components/layout/Layout';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, UserPlus, Edit, Trash2, Mail, Phone, Tag, Plus } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Contact } from '@/lib/types';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { Edit, FileText, UserPlus, Trash, X, Check } from 'lucide-react';
 
-export default function Contacts() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-  const [newTag, setNewTag] = useState('');
-  
-  const [newContact, setNewContact] = useState<{
-    name: string;
-    email: string;
-    phone: string;
-    category: string;
-    isDriver: boolean;
-  }>({
-    name: '',
-    email: '',
-    phone: '',
-    category: 'client',
-    isDriver: false
-  });
-  
+const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([
     {
-      id: 'contact1',
+      id: 'contact-001',
       name: 'John Doe',
-      email: 'john@example.com',
-      phone: '123-456-7890',
       category: 'client',
-      isDriver: false
+
     },
     {
-      id: 'contact2',
+      id: 'contact-002',
       name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '234-567-8901',
       category: 'supplier',
-      isDriver: false
     },
     {
-      id: 'contact3',
+      id: 'contact-003',
       name: 'Mike Johnson',
-      email: 'mike@example.com',
-      phone: '345-678-9012',
-      category: 'driver',
-      isDriver: true
+      category: 'team',
     },
     {
-      id: 'contact4',
-      name: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      phone: '456-789-0123',
-      category: 'team',
-      isDriver: false
-    }
-  ]);
-
-  const categories = ['client', 'supplier', 'driver', 'team'];
-
-  const handleAddContact = () => {
-    const contact: Contact = {
-      id: `contact${Date.now()}`,
-      name: newContact.name,
-      email: newContact.email,
-      phone: newContact.phone,
-      category: newContact.category as Contact['category'],
-      isDriver: newContact.isDriver
-    };
-    
-    setContacts(prev => [...prev, contact]);
-    setNewContact({
-      name: '',
-      email: '',
-      phone: '',
+      id: 'contact-004',
+      name: 'Emily Davis',
       category: 'client',
-      isDriver: false
-    });
-    setIsAddContactOpen(false);
-    toast.success('Contact added successfully');
-  };
+    },
+  ]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentContact, setCurrentContact] = useState<Contact | null>(null);
+  const [confirmingAction, setConfirmingAction] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
 
-  const handleAddTag = () => {
-    if (!newTag.trim() || !selectedContactId) return;
-    
-    // In a real app, this would add a tag to the contact
-    // For now, we'll just show a toast
-    toast.success(`Tag "${newTag}" added to contact`);
-    setNewTag('');
-    setIsTagModalOpen(false);
-  };
-
-  const handleTagContact = (contactId: string) => {
-    setSelectedContactId(contactId);
-    setIsTagModalOpen(true);
-  };
-
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = 
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.phone.includes(searchTerm);
-    
-    const matchesCategory = !selectedCategory || contact.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  const getCategoryBadgeClass = (category: string) => {
-    switch(category) {
-      case 'client':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'supplier':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'driver':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      case 'team':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  const handleSaveContact = () => {
+    if (currentContact) {
+      setContacts((prev) =>
+        prev.some((contact) => contact.id === currentContact.id)
+          ? prev.map((contact) =>
+              contact.id === currentContact.id ? currentContact : contact
+            )
+          : [...prev, currentContact]
+      );
+      setCurrentContact(null);
+      setIsModalOpen(false);
     }
+  };
+
+  const handleEditContact = (contact: Contact) => {
+    setCurrentContact(contact);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteContact = (id: string) => {
+    setContacts((prev) => prev.filter((contact) => contact.id !== id));
+  };
+
+  const handleConfirmAction = (contactId: string, action: () => void) => {
+    if (confirmingAction === contactId) {
+      action();
+      setConfirmingAction(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    } else {
+      setConfirmingAction(contactId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setConfirmingAction(null);
+        timeoutRef.current = null;
+      }, 3000); // Confirm icon visible for 3 seconds only
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubCategory(null); // Reset subcategory when parent category changes
+  };
+
+  const handleSubCategorySelect = (subCategory: string) => {
+    setSelectedSubCategory(subCategory);
+  };
+
+  const renderSubCategoryPills = () => {
+    if (selectedCategory === 'supplier') {
+      return (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => handleSubCategorySelect('company')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'company'
+                ? 'bg-orange-500 text-white'
+                : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+            }`}
+          >
+            Company
+          </button>
+          <button
+            onClick={() => handleSubCategorySelect('retail')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'retail'
+                ? 'bg-orange-500 text-white'
+                : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+            }`}
+          >
+            Retail
+          </button>
+        </div>
+      );
+    } else if (selectedCategory === 'client') {
+      return (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => handleSubCategorySelect('online')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'online'
+                ? 'bg-purple-500 text-white'
+                : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+            }`}
+          >
+            Online
+          </button>
+          <button
+            onClick={() => handleSubCategorySelect('in-store')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'in-store'
+                ? 'bg-purple-500 text-white'
+                : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+            }`}
+          >
+            In-Store
+          </button>
+        </div>
+      );
+    } else if (selectedCategory === 'team') {
+      return (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => handleSubCategorySelect('driver')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'driver'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-cyan-100 text-cyan-600 hover:bg-cyan-200'
+            }`}
+          >
+            Driver
+          </button>
+          <button
+            onClick={() => handleSubCategorySelect('manager')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'manager'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-cyan-100 text-cyan-600 hover:bg-cyan-200'
+            }`}
+          >
+            Manager
+          </button>
+          <button
+            onClick={() => handleSubCategorySelect('staff')}
+            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+              selectedSubCategory === 'staff'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-cyan-100 text-cyan-600 hover:bg-cyan-200'
+            }`}
+          >
+            Staff
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleRowClick = (id: string) => {
+    setSelectedContactId(id === selectedContactId ? null : id);
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex-1 w-full sm:w-auto">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search contacts..."
-                className="w-full pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Select onValueChange={setSelectedCategory} value={selectedCategory || ''}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button className="gap-1" onClick={() => setIsAddContactOpen(true)}>
-              <UserPlus className="h-4 w-4" />
-              <span>Add Contact</span>
-            </Button>
+      <div className="p-6">
+        <div className="mb-4">
+          <div className="relative w-1/2 sm:w-1/3 lg:w-1/4">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full"
+            />
           </div>
         </div>
-        
+
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
+                <TableHead>ID</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredContacts.length > 0 ? (
-                filteredContacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="font-medium">{contact.name}</TableCell>
-                    <TableCell>{contact.email}</TableCell>
-                    <TableCell>{contact.phone}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryBadgeClass(contact.category || 'client')}`}>
-                        {contact.category}
+              {filteredContacts.map((contact) => (
+                <TableRow
+                  key={contact.id}
+                  onClick={() => handleRowClick(contact.id)}
+                  className={`cursor-pointer ${
+                    selectedContactId === contact.id ? 'bg-gray-100 dark:bg-gray-700' : ''
+                  }`}
+                >
+                  <TableCell>{contact.name}</TableCell>
+                  <TableCell>{contact.id}</TableCell>
+                  <TableCell>
+                    {contact.category ? (
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          contact.category === 'supplier'
+                            ? 'bg-orange-100 text-orange-600'
+                            : contact.category === 'client'
+                            ? 'bg-purple-100 text-purple-600'
+                            : contact.category === 'team'
+                            ? 'bg-cyan-100 text-cyan-600'
+                            : ''
+                        }`}
+                      >
+                        {contact.category.charAt(0).toUpperCase() + contact.category.slice(1)}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      {contact.isDriver ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                          Yes
-                        </Badge>
-                      ) : (
-                        <span className="text-gray-400 dark:text-gray-600">No</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Edit ${contact.name}`)}>
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
+                    ) : (
+                      'N/A'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {selectedContactId === contact.id && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          onClick={() => handleEditContact(contact)}
+                        >
+                          <Edit size={16} />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleTagContact(contact.id)}>
-                          <Tag className="h-4 w-4" />
-                          <span className="sr-only">Tag</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
+                          onClick={() => console.log('View contact details', contact)}
+                        >
+                          <FileText size={16} />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => toast.info(`Delete ${contact.name}`)}>
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`p-2 rounded-full ${
+                            confirmingAction === contact.id
+                              ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                              : 'bg-red-100 text-red-600 hover:bg-red-200'
+                          }`}
+                          onClick={() =>
+                            handleConfirmAction(contact.id, () => handleDeleteContact(contact.id))
+                          }
+                        >
+                          {confirmingAction === contact.id ? <Check size={16} /> : <Trash size={16} />}
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredContacts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    No contacts found. Try adjusting your search or filters.
+                  <TableCell colSpan={4} className="text-center py-4">
+                    No contacts found
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </div>
-        
-        {/* Add Contact Dialog */}
-        <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Contact</DialogTitle>
+              <DialogTitle>
+                {currentContact ? 'Edit Contact' : 'Add Contact'}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 absolute top-2 right-2"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <X size={16} />
+              </Button>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
+                <Label>Contact Tag</Label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCategorySelect('supplier')}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      selectedCategory === 'supplier'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                    }`}
+                  >
+                    Supplier
+                  </button>
+                  <button
+                    onClick={() => handleCategorySelect('client')}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      selectedCategory === 'client'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                    }`}
+                  >
+                    Client
+                  </button>
+                  <button
+                    onClick={() => handleCategorySelect('team')}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                      selectedCategory === 'team'
+                        ? 'bg-cyan-500 text-white'
+                        : 'bg-cyan-100 text-cyan-600 hover:bg-cyan-200'
+                    }`}
+                  >
+                    Team
+                  </button>
+                </div>
+                {renderSubCategoryPills()}
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input 
-                  id="name" 
-                  value={newContact.name} 
-                  onChange={(e) => setNewContact({...newContact, name: e.target.value})}
+                <Input
+                  id="name"
+                  value={currentContact?.name || ''}
+                  onChange={(e) =>
+                    setCurrentContact((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email"
-                  value={newContact.email} 
-                  onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                <Label htmlFor="id">ID</Label>
+                <Input
+                  id="id"
+                  value={currentContact?.id || ''}
+                  onChange={(e) =>
+                    setCurrentContact((prev) => ({
+                      ...prev,
+                      id: e.target.value,
+                    }))
+                  }
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input 
-                  id="phone" 
-                  value={newContact.phone} 
-                  onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={newContact.category}
-                  onValueChange={(value) => setNewContact({...newContact, category: value})}
-                >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category} value={category}>{category}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input 
-                  id="isDriver" 
-                  type="checkbox"
-                  checked={newContact.isDriver}
-                  onChange={(e) => setNewContact({...newContact, isDriver: e.target.checked})}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <Label htmlFor="isDriver">This contact is a driver</Label>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>Cancel</Button>
-              <Button 
-                onClick={handleAddContact} 
-                disabled={!newContact.name}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
+                onClick={handleSaveContact}
               >
-                Add Contact
+                <Check size={16} />
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Add Tag Dialog */}
-        <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Tag</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Enter tag name"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleAddTag} className="shrink-0">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Floating Add Contact Button */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-6 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors"
+          aria-label="Add Contact"
+        >
+          <UserPlus className="h-6 w-6" />
+        </button>
       </div>
     </Layout>
   );
-}
+};
+
+export default Contacts;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronUp, FileText, Trash, X, Check, Camera, Paperclip, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { Transaction } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +14,8 @@ export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+
   const [transactions, setTransactions] = useState<Transaction[]>([
     {
       id: 'trx-001',
@@ -48,12 +48,28 @@ export default function Transactions() {
       contactName: 'City Power',
       description: 'Electricity bill',
       date: new Date('2023-10-17T11:20:00')
+    },
+    {
+      id: 'trx-008',
+      amount: 75.00,
+      type: 'expense',
+      contactName: 'Tech Solutions',
+      description: 'Software subscription',
+      date: new Date('2023-10-19T15:45:00')
+    },
+    {
+      id: 'trx-009',
+      amount: 69.00,
+      type: 'due',
+      contactName: '',
+      description: 'DUE',
+      date: new Date('2023-10-14T10:00:00')
     }
   ]);
-  
+
   const [newTransaction, setNewTransaction] = useState<{
     amount: number;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | 'due';
     contactName: string;
     description?: string;
   }>({
@@ -90,7 +106,7 @@ export default function Transactions() {
       description: newTransaction.description,
       date: new Date()
     };
-    
+
     setTransactions(prev => [...prev, transaction]);
     setNewTransaction({
       amount: 0,
@@ -104,57 +120,101 @@ export default function Transactions() {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
+  const handleCardClick = (type: 'income' | 'expense' | 'due') => {
+    if (type === 'due') {
+      const lastDue = transactions.filter(t => t.type === 'due').pop();
+      const lastDueAmount = lastDue ? lastDue.amount : 0;
+      const incomeSinceLastDue = transactions
+        .filter(t => t.type === 'income' && (!lastDue || t.date > lastDue.date))
+        .reduce((sum, t) => sum + t.amount, 0);
+      const expensesSinceLastDue = transactions
+        .filter(t => t.type === 'expense' && (!lastDue || t.date > lastDue.date))
+        .reduce((sum, t) => sum + t.amount, 0);
+      const newDue = lastDueAmount + incomeSinceLastDue - expensesSinceLastDue;
+
+      const newTransaction: Transaction = {
+        id: `trx-${Math.random().toString(36).substring(2, 9)}`,
+        amount: newDue,
+        type: 'due',
+        contactName: '',
+        description: 'DUE',
+        date: new Date()
+      };
+      setTransactions(prev => [...prev, newTransaction]);
+    } else {
+      setNewTransaction({
+        amount: 0,
+        type,
+        contactName: '',
+        description: type === 'income' ? 'Topup' : ''
+      });
+      setIsAddTransactionOpen(true);
+    }
+  };
+
+  const handleFileAttach = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setAttachedFile(event.target.files[0]);
+    }
+  };
+
+  const handleScanDocument = () => {
+    console.log('Scan document functionality triggered.'); // Placeholder for SDK integration
+  };
+
   // Calculate totals
   const income = transactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const expenses = transactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const balance = income - expenses;
 
   return (
     <Layout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search transactions..."
-                className="w-full pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <Button className="gap-1" onClick={() => setIsAddTransactionOpen(true)}>
-              <Plus className="h-4 w-4" />
-              <span>Add Transaction</span>
-            </Button>
+      <div className="container mx-auto py-6 overflow-y-hidden">
+        <div
+          className="mb-6 flex items-center gap-4 z-10 bg-white dark:bg-gray-800 transition-transform"
+          style={{ paddingTop: '-3rem', marginTop: '-5.5rem' }} // Set marginTop to -5.5rem
+        >
+          <div className="relative w-1/2 sm:w-1/3 lg:w-1/4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8"
+            />
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="rounded-lg border p-4 bg-green-50 dark:bg-green-900/20">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(30%, 1fr))' }}>
+          <div
+            className="rounded-lg border p-4 bg-green-50 dark:bg-green-900/20 cursor-pointer"
+            onClick={() => handleCardClick('income')}
+          >
             <div className="text-sm text-muted-foreground mb-1">Income</div>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">${income.toFixed(2)}</div>
           </div>
-          <div className="rounded-lg border p-4 bg-red-50 dark:bg-red-900/20">
+          <div
+            className="rounded-lg border p-4 bg-red-50 dark:bg-red-900/20 cursor-pointer"
+            onClick={() => handleCardClick('expense')}
+          >
             <div className="text-sm text-muted-foreground mb-1">Expenses</div>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">${expenses.toFixed(2)}</div>
           </div>
-          <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-900/20">
-            <div className="text-sm text-muted-foreground mb-1">Balance</div>
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">${balance.toFixed(2)}</div>
+          <div
+            className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-900/20 cursor-pointer"
+            onClick={() => handleCardClick('due')}
+          >
+            <div className="text-sm text-muted-foreground mb-1">Due</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">${(income - expenses).toFixed(2)}</div>
           </div>
         </div>
-        
+
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -183,21 +243,53 @@ export default function Transactions() {
                       <div className="flex items-center">
                         {transaction.type === 'income' ? (
                           <ArrowDownCircle className="h-4 w-4 mr-2 text-green-500 dark:text-green-400" />
-                        ) : (
+                        ) : transaction.type === 'expense' ? (
                           <ArrowUpCircle className="h-4 w-4 mr-2 text-red-500 dark:text-red-400" />
+                        ) : (
+                          <ArrowUpCircle className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" />
                         )}
                         <span className="capitalize">{transaction.type}</span>
                       </div>
                     </TableCell>
                     <TableCell>{transaction.contactName}</TableCell>
                     <TableCell>{transaction.description || '-'}</TableCell>
-                    <TableCell className={transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                    <TableCell className={
+                      transaction.type === 'income' 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : transaction.type === 'expense' 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : 'text-blue-600 dark:text-blue-400'
+                    }>
                       ${transaction.amount.toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <div>
                         <div>{format(transaction.date, 'dd/MM/yy')}</div>
                         <div className="text-xs text-muted-foreground">{format(transaction.date, 'HH:mm')}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <button
+                          className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          onClick={() => console.log('View transaction details', transaction)}
+                        >
+                          <FileText size={16} />
+                        </button>
+                        {attachedFile && (
+                          <button
+                            className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            onClick={() => console.log('View attached file', attachedFile)}
+                          >
+                            <Eye size={16} />
+                          </button>
+                        )}
+                        <button
+                          className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          onClick={() => console.log('Delete transaction', transaction)}
+                        >
+                          <Trash size={16} />
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -212,19 +304,36 @@ export default function Transactions() {
             </TableBody>
           </Table>
         </div>
-        
+
+        {/* Floating Add Transaction Button */}
+        <button
+          onClick={() => setIsAddTransactionOpen(true)}
+          className="fixed bottom-6 right-6 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-colors"
+          aria-label="Add Transaction"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+
         {/* Add Transaction Dialog */}
         <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Transaction</DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 absolute top-2 right-2"
+                onClick={() => setIsAddTransactionOpen(false)}
+              >
+                <X size={16} />
+              </Button>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="type">Transaction Type</Label>
                 <Select 
                   value={newTransaction.type} 
-                  onValueChange={(value: 'income' | 'expense') => 
+                  onValueChange={(value: 'income' | 'expense' | 'due') => 
                     setNewTransaction({...newTransaction, type: value})
                   }
                 >
@@ -234,6 +343,7 @@ export default function Transactions() {
                   <SelectContent>
                     <SelectItem value="expense">Expense</SelectItem>
                     <SelectItem value="income">Income</SelectItem>
+                    <SelectItem value="due">Due</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -264,14 +374,29 @@ export default function Transactions() {
                   onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
                 />
               </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" onClick={handleScanDocument}>
+                  <Camera size={16} />
+                </Button>
+                <label htmlFor="file-attach" className="cursor-pointer">
+                  <Paperclip size={16} />
+                </label>
+                <input
+                  id="file-attach"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileAttach}
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddTransactionOpen(false)}>Cancel</Button>
-              <Button 
-                onClick={handleAddTransaction} 
-                disabled={!newTransaction.contactName || newTransaction.amount <= 0}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200"
+                onClick={handleAddTransaction}
               >
-                Add Transaction
+                <Check size={16} />
               </Button>
             </DialogFooter>
           </DialogContent>

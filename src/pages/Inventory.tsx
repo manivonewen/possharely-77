@@ -1,15 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import InventoryOverview from '@/components/dashboard/InventoryOverview';
 import { InventoryItem } from '@/lib/types';
-import { Search, Filter, Plus, Edit, Trash } from 'lucide-react';
 
 const Inventory = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -127,21 +123,6 @@ const Inventory = () => {
     },
   ];
 
-  // Get unique categories
-  const categories = Array.from(new Set(inventoryData.map(item => item.category)));
-
-  // Filter inventory items based on search and category
-  const filteredItems = inventoryData.filter(item => {
-    const matchesSearch = 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.supplier?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
-    
-    return matchesSearch && matchesCategory;
-  });
-
   // Close sidebar on small screens when clicking outside
   useEffect(() => {
     const handleResize = () => {
@@ -160,7 +141,7 @@ const Inventory = () => {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col bg-pos-gray">
+    <div className="flex h-screen flex-col bg-pos-gray overflow-hidden">
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
       <div className="flex flex-1 overflow-hidden">
@@ -186,118 +167,8 @@ const Inventory = () => {
             </div>
             
             <div className="mb-6">
-              <h2 className="section-title">Inventory Overview</h2>
+              <h2 className="text-lg font-semibold text-pos-dark">Inventory Overview</h2>
               <InventoryOverview items={inventoryData} />
-            </div>
-            
-            <div className="mt-8">
-              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="section-title mb-0">Product Inventory</h2>
-                <button className="primary-button flex items-center gap-2">
-                  <Plus size={18} />
-                  <span>Add Product</span>
-                </button>
-              </div>
-              
-              <div className="mb-4 flex flex-col gap-4 sm:flex-row">
-                <div className="relative flex-1">
-                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, SKU or supplier..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-field w-full pl-10"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    value={selectedCategory || ''}
-                    onChange={(e) => setSelectedCategory(e.target.value || null)}
-                    className="input-field"
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="card-container overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-full divide-y divide-pos-border">
-                    <thead className="bg-pos-gray">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          Product
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          SKU
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          Category
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          Stock
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          Price
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-pos-border bg-white">
-                      {filteredItems.map((item) => (
-                        <tr key={item.id}>
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <div className="font-medium">{item.name}</div>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {item.sku}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                            {item.category}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <div className="flex items-center">
-                              <span className={`mr-2 inline-block h-2 w-2 rounded-full ${
-                                item.inStock <= 0 
-                                  ? 'bg-pos-danger' 
-                                  : item.inStock <= item.reorderPoint! 
-                                    ? 'bg-amber-500' 
-                                    : 'bg-emerald-500'
-                              }`}></span>
-                              <span className="font-medium">{item.inStock}</span>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm">
-                            ${item.price.toFixed(2)}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-sm">
-                            <div className="flex gap-2">
-                              <button className="flex h-8 w-8 items-center justify-center rounded-full bg-pos-blue/10 text-pos-blue hover:bg-pos-blue/20 button-transition">
-                                <Edit size={16} />
-                              </button>
-                              <button className="flex h-8 w-8 items-center justify-center rounded-full bg-pos-danger/10 text-pos-danger hover:bg-pos-danger/20 button-transition">
-                                <Trash size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {filteredItems.length === 0 && (
-                  <div className="py-8 text-center text-gray-500">
-                    <p>No products found</p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </main>

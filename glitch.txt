@@ -1,0 +1,17 @@
+glitch:
+
+-cart modal should be a modal sliding from the right.
+-close cart modal after clicked an action button in the bottom.
+-hide scrollbars.
+-shrink by 50% search bar length 
+-products and contacts pages still not showing 
+-search bar design not showing properly
+-open ticket actions and status
+
+-settings, backup options, integrations
+-product page, add new, actions
+
+-hiding IDS
+-hiding riel
+
+-pwa

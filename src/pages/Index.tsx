@@ -1,14 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Product, CartItem } from '@/lib/types';
 import ProductGrid from '@/components/pos/ProductGrid';
 import Cart from '@/components/pos/Cart';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShoppingCart, List, Grid, Search } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ShoppingCart } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
+import PillBar from '@/components/PillBar';
 
 const sampleProducts: Product[] = [
   {
@@ -89,10 +87,9 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [products] = useState<Product[]>(sampleProducts);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const { user, isLoading } = useAuth();
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const handleProductSelect = (product: Product) => {
     const existingItem = cartItems.find((item) => item.product.id === product.id);
@@ -124,76 +121,28 @@ const Index = () => {
     setCartItems([]);
   };
 
-  // Extract unique categories from products
-  const categories = Array.from(new Set(products.map((product) => product.category)));
-
-  // Filter products by search term and selected categories
+  // Filter products by search term and selected category
   const filteredProducts = products.filter(product => {
     const matchesSearch = searchTerm.trim() === '' || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = selectedCategories.length === 0 || 
-      selectedCategories.includes(product.category);
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
 
-  const handleCategoryToggle = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
-
   return (
     <Layout>
-      <div className="flex flex-col h-full overflow-hidden">
-        <div className="p-4 flex flex-col space-y-4">
-          {/* Search input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-wrap justify-between items-center gap-2">
-            {/* View mode toggle first */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">View:</span>
-              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grid')}>
-                <ToggleGroupItem value="table" aria-label="View as table">
-                  <List className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="grid" aria-label="View as grid">
-                  <Grid className="h-4 w-4" />
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-            
-            {/* Category toggles */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryToggle(category)}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    selectedCategories.includes(category)
-                      ? 'bg-primary text-primary-foreground dark:bg-primary dark:text-primary-foreground'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="flex flex-col h-full overflow-hidden overflow-y-hidden">
+        <div className="p-4">
+          {/* Pill Bar */}
+          <PillBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
         </div>
 
         {/* Product grid in a scrollable container */}
@@ -223,10 +172,10 @@ const Index = () => {
             )}
           </button>
         </DrawerTrigger>
-        <DrawerContent className="h-[90vh]">
+        <DrawerContent className="h-[90vh] bottom-0 fixed w-full max-w-md mx-auto rounded-t-lg shadow-lg bg-white dark:bg-gray-800">
           <div className="h-full">
             <Cart
-              items={cartItems}
+              cartItems={cartItems}
               onItemUpdate={handleCartItemUpdate}
               onItemRemove={handleCartItemRemove}
               onClearCart={handleClearCart}
